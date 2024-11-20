@@ -1,0 +1,754 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using Lab_5_Web_App_Dev.Data
+@using Lab_5_Web_App_Dev.Services 
+@inject BookServices BookServices
+@inject UserServices UserServices
+@*ChatGPT Source Code: https://chatgpt.com/share/67257eb0-d524-8002-973d-035dcfc6c458*@
+
+<PageTitle>Home</PageTitle>
+
+<h1>Library Management System</h1>
+
+@*Creates the base level menu that allows the user to manage users, manage books, borrow books, return books, and list borrowed books.*@
+@if(!isInBookMenu && !isInUserMenu && !isGoHomeAvailable)
+{
+    <button class="btn btn-primary" @onclick="ToggleUserMenu">Manage Users</button>
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="ToggleBookMenu">Manage Books</button>
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="BorrowBook">Borrow Books</button>
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="ReturnBook">Return Books</button>
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="ListBorrowedBooks">See Borrowed Books</button>
+}
+
+@*Creates the user level menu that allows the user to add users, edit users, delete users, list users, and go back to the base menu.*@
+@if (isInUserMenu)
+{
+    <br />
+    <button class="btn btn-primary" @onclick="AddNewUser">Add User</button>
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="EditOldUser">Edit User</button>
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="DeleteOldUser">Delete User</button>
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="ShowUsers">List Users</button>
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="ToggleUserMenu">Go Back</button>
+}
+
+@*Lists every user found within Users.csv*@
+@if (isListingUsers)
+{
+    @if (isListingUsers && userGroups != null && userGroups.Any())
+    {
+        <ul>
+            @foreach (var group in userGroups)
+            {
+                <li>
+                    @($"Id: {group.User.Id} Name: {group.User.Name} Email: {group.User.Email}")
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>No users available.</p>
+    }
+}
+
+@*Displays the menu for adding users*@
+@if (isInAddUserMenu)
+{
+    <h3>Add a New User</h3>
+
+    <div>
+        <label>User Name: </label>
+        <input @bind="newName" />
+    </div>
+    <div>
+        <label>User Email: </label>
+        <input @bind="newEmail" />
+    </div>
+    <button @onclick="AddNewUser">Add User</button>
+
+    @if (responseMessage != null)
+    {
+        <p>@responseMessage</p>
+    }
+}
+
+@*Displays the menu for editting preexisting users*@
+@if (isInEditUserMenu)
+{
+    <div>
+        <label>Enter User ID to Edit: </label>
+        <input type="number" @bind="selectedUserId" />
+    </div>
+    <div>
+        <label>New Name: </label>
+        <input @bind="newName" />
+    </div>
+    <div>
+        <label>New Email: </label>
+        <input @bind="newEmail" />
+    </div>
+    <button @onclick="EditOldUser">Edit User</button>
+
+    @if (!string.IsNullOrEmpty(responseMessage))
+    {
+        <p>@responseMessage</p>
+    }
+}
+
+@*Displays the menu for deleting users*@
+@if (isInDeleteUserMenu)
+{
+    <div>
+        <label>Enter User ID to Delete: </label>
+        <input type="number" @bind="selectedUserId" />
+    </div>
+    <button @onclick="DeleteOldUser">Delete User</button>
+
+    @if (!string.IsNullOrEmpty(responseMessage))
+    {
+        <p>@responseMessage</p>
+    }
+}
+
+@*Creates the book level menu that allows the user to add books, edit books, delete books, list books, and go back to the base menu.*@
+@if (isInBookMenu)
+{
+    <br />
+    <button class="btn btn-primary" @onclick="AddNewBook">Add Book</button>
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="EditOldBook">Edit Book</button>
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="DeleteOldBook">Delete Book</button> 
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="ShowBooks">List Book</button>
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="ToggleBookMenu">Go Back</button>
+}
+
+@*Displays every book found within Books.csv*@
+@if (isListingBooks)
+{
+    @if (isListingBooks && bookGroups != null && bookGroups.Any())
+    {
+        <ul>
+            @foreach (var group in bookGroups)
+            {
+                <li>
+                    @($"{group.Book.Id}. {group.Book.Title} by {group.Book.Author} (ISBN: {group.Book.ISBN}) - Available Copies: {group.Count}")
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>No books available.</p>
+    }
+}
+
+@*Displays the menu for allowing users to add Books to Books.csv*@
+@if (isInAddBookMenu)
+{
+    <h3>Add a New Book</h3>
+
+    <div>
+        <label>Book Title: </label>
+        <input @bind="newTitle" />
+    </div>
+    <div>
+        <label>Author: </label>
+        <input @bind="newAuthor" />
+    </div>
+    <div>
+        <label>ISBN: </label>
+        <input @bind="newISBN" />
+    </div>
+    <button @onclick="AddNewBook">Add Book</button>
+
+    @if (responseMessage != null)
+    {
+        <p>@responseMessage</p>
+    }
+}
+
+@*Displays the menu for editting previously existing Books.csv*@
+@if (isInEditBooksMenu)
+{
+    <div>
+        <label>Enter Book ID to Edit: </label>
+        <input type="number" @bind="selectedBookId" />
+    </div>
+    <div>
+        <label>New Title: </label>
+        <input @bind="newTitle" />
+    </div>
+    <div>
+        <label>New Author: </label>
+        <input @bind="newAuthor" />
+    </div>
+    <div>
+        <label>New ISBN: </label>
+        <input @bind="newISBN" />
+    </div>
+    <button @onclick="EditOldBook">Edit Book</button>
+
+    @if (!string.IsNullOrEmpty(responseMessage))
+    {
+        <p>@responseMessage</p>
+    }
+}
+
+@*Displays the menu for deleting books from Books.csv*@
+@if(isInDeleteBooksMenu)
+{
+    <div>
+        <label>Enter Book ID to Delete: </label>
+        <input type="number" @bind="selectedBookId" />
+    </div>
+    <button @onclick="DeleteOldBook">Delete Book</button>
+
+    @if (!string.IsNullOrEmpty(responseMessage))
+    {
+        <p>@responseMessage</p>
+    }
+}
+
+@*Displays the menu for borrowing books*@
+@if(isInBorrowBooksMenu)
+{
+    <!-- Book Selection Section -->
+    <label>Select Book ID to Borrow:</label>
+    <select @bind="selectedBookId">
+        <option disabled selected>Select a book</option>
+        @foreach (var book in bookservices.books)
+        {
+            <option value="@book.Id">@($"{book.Id}: {book.Title} by {book.Author}")</option>
+        }
+    </select>
+    <button @onclick="LoadBooksForBorrowing">Continue</button>
+
+    <!-- User Selection Section, shown only when a book is selected -->
+    @if (selectedBook != null)
+    {
+        <h4>Book Selected: @selectedBook.Title by @selectedBook.Author</h4>
+        <label>Select User ID to Borrow:</label>
+        <select @bind="selectedUserId">
+            <option disabled selected>Select a user</option>
+            @foreach (var user in userservices.users)
+            {
+                <option value="@user.Id">@($"{user.Id}: {user.Name}")</option>
+            }
+        </select>
+        <button @onclick="BorrowBook">Borrow Book</button>
+    }
+}
+
+@*Displays the menu for returning books if there are any borrowed books*@
+@if (isInReturnBooksMenu)
+{
+    <label for="userId">Enter User ID to return a book for:</label>
+    <input type="number" id="userId" @bind="selectedUserId" />
+    <button @onclick="LoadBorrowedBooks">Load Borrowed Books</button>
+
+    <!-- Display User's Borrowed Books -->
+    @if (selectedUser != null && borrowedBooks.ContainsKey(selectedUser) && borrowedBooks[selectedUser].Any(b => b != null))
+    {
+        <h4>Borrowed Books for @selectedUser.Name</h4>
+        <ul>
+            @foreach (var book in borrowedBooks[selectedUser].Where(b => b != null).Select((b, index) => new { Book = b, Index = index + 1 }))
+            {
+                @if (book != null)
+                {
+                    <li>@($"{book.Index}. {book.Book.Title} by {book.Book.Author} (ISBN: {book.Book.ISBN})")</li>
+                }
+            }
+        </ul>
+
+        <!-- Book Number Input -->
+        <label for="bookNumber">Enter the number of the book to return:</label>
+        <input type="number" id="bookNumber" @bind="selectedBookIndex" />
+        <button @onclick="ReturnBook">Return Book</button>
+    }
+
+    <!-- Error or Success Message -->
+    @if (!string.IsNullOrEmpty(responseMessage))
+    {
+        <p>@responseMessage</p>
+    }
+    else if (selectedUser == null)
+    {
+        <p>No borrowed books or user not found.</p>
+    }
+}
+
+@*Displays every instance of a borrowed book along with the user that withdrew it.*@
+@if (isListingBorrowedBooks)
+{
+    @if (borrowedBooks != null && borrowedBooks.Any())
+    {
+        @foreach (var entry in borrowedBooks)
+        {
+            <h4>User: @entry.Key.Name</h4>
+
+            <ul>
+                @foreach (var book in entry.Value)
+                {
+                    @if (book != null)
+                    {
+                        <li>@($"{book.Title} by {book.Author} (ISBN: {book.ISBN})")</li>
+                    }
+                }
+            </ul>
+        }
+    }
+    else
+    {
+        <p>No books have been borrowed.</p>
+    }
+}
+
+@*Displays a button that allows the user to return to the base starting menu*@
+@if (isGoHomeAvailable)
+{
+    <br />
+    <br />
+    <button class="btn btn-primary" @onclick="GoToHome">Go Home</button>
+}
+
+@code {
+    bool isInUserMenu = false;
+    bool isInBookMenu = false;
+    bool isListingBooks = false;
+    bool isInEditBooksMenu = false;
+    bool isInDeleteBooksMenu = false;
+    bool isGoHomeAvailable = false;
+    bool isInAddBookMenu = false;
+    bool isInAddUserMenu = false;
+    bool isInEditUserMenu = false;
+    bool isInDeleteUserMenu = false;
+    bool isListingUsers = false;
+    bool isInBorrowBooksMenu = false;
+    bool isInReturnBooksMenu = false;
+    bool isListingBorrowedBooks = false;
+    private Dictionary<User, List<Book>> borrowedBooks = new Dictionary<User, List<Book>>();
+    private BookServices bookservices = new BookServices();
+    private UserServices userservices = new UserServices();
+    private Book book = new Book();
+    private IEnumerable<dynamic> bookGroups;
+    private IEnumerable<dynamic> userGroups;
+    private int selectedBookId;
+    private int selectedUserId;
+    private int selectedBookIndex;
+    private string newTitle;
+    private string newAuthor;
+    private string newISBN;
+    private string newName;
+    private string newEmail;
+    private string responseMessage;
+    private Book selectedBook;
+    private User selectedUser;
+
+
+    /// <summary>
+    /// Initializes the list of books and users from their respective csv files.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        bookservices.ReadBooks();
+        userservices.ReadUsers();
+        //borrowedBooks.Clear;
+    }
+
+    /// <summary>
+    /// Makes all of the menu bools false, so that the user goes back to the starting two options.
+    /// </summary>
+    private void GoToHome()
+    {
+        isInBookMenu = false;
+        isListingBooks = false;
+        isInAddBookMenu = false;
+        isInEditBooksMenu = false;
+        isInDeleteBooksMenu = false;
+
+        isInUserMenu = false;
+        isListingUsers = false;
+        isInAddUserMenu = false;
+        isInEditUserMenu = false;
+        isInDeleteUserMenu = false;
+
+        isInBorrowBooksMenu = false;
+        isInReturnBooksMenu = false;
+        isListingBorrowedBooks = false;
+
+        isGoHomeAvailable = false;
+        responseMessage = null;
+
+        TestingReturnBookDictionary();
+    }
+
+    private void TestingReturnBookDictionary()
+    {
+        Console.WriteLine("Borrowed Books Dictionary Contents:");
+
+        foreach (var entry in borrowedBooks)
+        {
+            Console.WriteLine($"User: {entry.Key.Name} (ID: {entry.Key.Id})");
+
+            foreach (var book in entry.Value)
+            {
+                if (book != null)
+                {
+                    Console.WriteLine($"- {book.Title} by {book.Author} (ISBN: {book.ISBN})");
+                }
+            }
+
+            if (!entry.Value.Any())
+            {
+                Console.WriteLine("This user has no borrowed books.");
+            }
+
+            Console.WriteLine();
+        }
+
+        if (!borrowedBooks.Any())
+        {
+            Console.WriteLine("No borrowed books found in the dictionary.");
+        }
+    }
+
+    /// <summary>
+    /// Switches to the user options menu
+    /// </summary>
+    private void ToggleUserMenu()
+    {
+        isInUserMenu = !isInUserMenu;
+    }
+
+    /// <summary>
+    /// Switches to the book options menu
+    /// </summary>
+    private void ToggleBookMenu()
+    {
+        isInBookMenu = !isInBookMenu;
+    }
+
+    //// <summary>
+    /// Shows a list of books
+    /// </summary>
+    private void ShowBooks()
+    {
+        isInBookMenu = false;
+        isListingBooks = true;
+        isGoHomeAvailable = true;
+
+        bookGroups = bookservices.ListBooks();
+    }
+
+    /// <summary>
+    /// Adds a book to Books.csv based on user input
+    /// </summary>
+    private void AddNewBook()
+    {
+        isInBookMenu = false;
+        isInAddBookMenu = true;
+        isGoHomeAvailable = true;
+
+        if (!string.IsNullOrWhiteSpace(newTitle) && !string.IsNullOrWhiteSpace(newAuthor) && !string.IsNullOrWhiteSpace(newISBN))
+        {
+            bookservices.AddBook(newTitle, newAuthor, newISBN);
+            responseMessage = "Book added successfully!";
+
+            // Clear the inputs
+            newTitle = string.Empty;
+            newAuthor = string.Empty;
+            newISBN = string.Empty;
+        }
+        else
+        {
+            responseMessage = "All fields are required!";
+        }
+    }
+
+    /// <summary>
+    /// Allows a user to edit a previously existing book.
+    /// </summary>
+    private void EditOldBook()
+    {
+        isInBookMenu = false;
+        isInEditBooksMenu = true;
+        isGoHomeAvailable = true;
+
+        if (selectedBookId > 0 && selectedBookId <= bookservices.books.Max(b => b.Id) && !string.IsNullOrWhiteSpace(newTitle) &&
+            !string.IsNullOrWhiteSpace(newAuthor) && !string.IsNullOrWhiteSpace(newISBN))
+        {
+            bookservices.EditBook(selectedBookId, newTitle, newAuthor, newISBN);
+            responseMessage = "Book edited successfully!";
+
+            // Clear the inputs
+            newTitle = string.Empty;
+            newAuthor = string.Empty;
+            newISBN = string.Empty;
+        }
+        else
+        {
+            responseMessage = "Please fill out all fields and enter a valid ID.";
+        }
+    }
+
+    /// <summary>
+    /// Allows a user to delete a previously existing book.
+    /// </summary>
+    private void DeleteOldBook()
+    {
+        isInBookMenu = false;
+        isInDeleteBooksMenu = true;
+        isGoHomeAvailable = true;
+
+        if (selectedBookId > 0 && selectedBookId <= bookservices.books.Max(b => b.Id))
+        {
+            bookservices.DeleteBook(selectedBookId);
+            responseMessage = $"Book with ID {selectedBookId} deleted successfully!";
+
+            // Clear the input
+            selectedBookId = 0;
+        }
+        else
+        {
+            responseMessage = "Please enter a valid ID.";
+        }
+    }
+
+    /// <summary>
+    /// Displays every user within Users.csv
+    /// </summary>
+    private void ShowUsers()
+    {
+        isInUserMenu = false;
+        isListingUsers = true;
+        isGoHomeAvailable = true;
+
+        userGroups = userservices.ListUsers();
+    }
+
+    /// <summary>
+    /// Allows a user to create a new user profile and add it to Users.csv
+    /// </summary>
+    private void AddNewUser()
+    {
+        isInUserMenu = false;
+        isInAddUserMenu = true;
+        isGoHomeAvailable = true;
+
+        if (!string.IsNullOrWhiteSpace(newName) && !string.IsNullOrWhiteSpace(newEmail))
+        {
+            userservices.AddUser(newName, newEmail);
+            responseMessage = "User added successfully!";
+
+            // Clear the inputs
+            newName = string.Empty;
+            newEmail = string.Empty;
+        }
+        else
+        {
+            responseMessage = "All fields are required!";
+        }
+    }
+
+    /// <summary>
+    /// Allows a user to edit a previously existing user profile.
+    /// </summary>
+    private void EditOldUser()
+    {
+        isInUserMenu = false;
+        isInEditUserMenu = true;
+        isGoHomeAvailable = true;
+
+        if (selectedUserId > 0 && selectedUserId <= userservices.users.Max(b => b.Id) && !string.IsNullOrWhiteSpace(newName) &&
+            !string.IsNullOrWhiteSpace(newEmail))
+        {
+            userservices.EditUser(selectedUserId, newName, newEmail);
+            responseMessage = "User edited successfully!";
+
+            // Clear the inputs
+            newName = string.Empty;
+            newEmail = string.Empty;
+        }
+        else
+        {
+            responseMessage = "Please fill out all fields and enter a valid ID.";
+        }
+    }
+
+    /// <summary>
+    /// Allows a user to delete a previously existing user profile from Users.csv
+    /// </summary>
+    private void DeleteOldUser()
+    {
+        isInUserMenu = false;
+        isInDeleteUserMenu = true;
+        isGoHomeAvailable = true;
+
+        if (selectedUserId > 0 && selectedUserId <= userservices.users.Max(b => b.Id))
+        {
+            userservices.DeleteUser(selectedUserId);
+            responseMessage = $"User with ID {selectedUserId} deleted successfully!";
+
+            // Clear the input
+            selectedUserId = 0;
+        }
+        else
+        {
+            responseMessage = "Please enter a valid ID.";
+        }
+    }
+
+    /// <summary>
+    /// Loads a list of Books that can be borrowed 
+    /// </summary>
+    private void LoadBooksForBorrowing()
+    {
+        isInUserMenu = false;
+        isInBorrowBooksMenu = true;
+        isGoHomeAvailable = true;
+
+        responseMessage = null;
+
+        // Find the selected book
+        selectedBook = bookservices.books.FirstOrDefault(b => b.Id == selectedBookId);
+
+        if (selectedBook == null)
+        {
+            responseMessage = "Book not found or no available copies!";
+        }
+    }
+
+    /// <summary>
+    /// Loads a list of books that have been borrowed along with the users that withdrew them.
+    /// </summary>
+    private void LoadBorrowedBooks()
+    {
+        selectedUser = userservices.users.FirstOrDefault(u => u.Id == selectedUserId);
+
+        if (selectedUser == null || !borrowedBooks.ContainsKey(selectedUser) || !borrowedBooks[selectedUser].Any())
+        {
+            responseMessage = "User not found or no borrowed books.";
+        }
+        else
+        {
+            responseMessage = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Allows a user to borrow a book if it is available
+    /// </summary>
+    private void BorrowBook()
+    {
+        isInBorrowBooksMenu = true;
+        isGoHomeAvailable = true;
+
+        responseMessage = null;
+
+        // Find the selected user
+        selectedUser = userservices.users.FirstOrDefault(u => u.Id == selectedUserId);
+
+        if (selectedUser == null)
+        {
+            responseMessage = "User not found!";
+            return;
+        }
+
+        // Initialize borrowed books list for the user if it doesn't exist
+        if (!borrowedBooks.ContainsKey(selectedUser))
+        {
+            borrowedBooks[selectedUser] = new List<Book>();
+        }
+
+        // Add the book to the user's borrowed list and remove from available books
+        borrowedBooks[selectedUser].Add(selectedBook);
+        bookservices.books.Remove(selectedBook);
+        responseMessage = "Book borrowed successfully!";
+        GoToHome();
+
+        // Reset selection after borrowing
+        selectedBookId = 0;
+        selectedUserId = 0;
+        selectedBook = null;
+        selectedUser = null;
+    }
+
+    /// <summary>
+    /// Creates the blazor menu that displays all borrowed books.
+    /// </summary>
+    private void ListBorrowedBooks()
+    {
+        if(borrowedBooks != null)
+        {
+            isListingBorrowedBooks = true;
+        }
+        isGoHomeAvailable = true;
+    }
+
+    /// <summary>
+    /// Allows users to return borrowed books.
+    /// </summary>
+    private void ReturnBook()
+    {
+        isInReturnBooksMenu = true;
+        isGoHomeAvailable = true;
+
+        isInReturnBooksMenu = true;
+        isGoHomeAvailable = true;
+
+        // Verify selectedUser exists in the dictionary before proceeding
+        if (selectedUser != null && borrowedBooks.ContainsKey(selectedUser))
+        {
+            // Ensure selectedBookIndex is valid
+            if (selectedBookIndex >= 1 && selectedBookIndex <= borrowedBooks[selectedUser].Count)
+            {
+                var bookToReturn = borrowedBooks[selectedUser][selectedBookIndex - 1];
+                borrowedBooks[selectedUser].RemoveAt(selectedBookIndex - 1);
+                bookservices.books.Add(bookToReturn); // Return the book to available books
+
+                // Remove user from dictionary if no books are left
+                if (!borrowedBooks[selectedUser].Any())
+                {
+                    borrowedBooks.Remove(selectedUser);
+                }
+
+                responseMessage = "Book returned successfully!";
+                foreach(var book in borrowedBooks)
+                {
+                    Console.WriteLine($"{book}");
+                }
+            }
+            else
+            {
+                responseMessage = "Invalid book number!";
+            }
+        }
+        else
+        {
+            responseMessage = "User not found or has no borrowed books!";
+        }
+    }
+} 
