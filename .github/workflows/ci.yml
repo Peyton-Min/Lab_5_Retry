@@ -11,15 +11,21 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env: 
+      Solution_Name: Lab_5_Web_App_Dev.sln
+      Project_Path: Lab_6/Lab_6.csproj
+
     steps:
     - uses: actions/checkout@v4
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-restore --verbosity normal
+    - name: Restore NuGet packages
+        run:dotnet restore ${{env.Solution_Name}}
+    - name: Build solution
+        run:dotnet build ${{ env.Solution_Name }} --configuration Release --no-restore
+    - name: Test and publish results
+        run:dotnet test ${{env.Project_Path }} --no-restore --verbosity normal
+
+ 
