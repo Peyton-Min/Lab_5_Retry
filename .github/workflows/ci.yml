@@ -17,15 +17,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-    - name: Restore NuGet packages
-    - run: dotnet restore ${{env.Solution_Name}}
-    - name: Build solution
-    - run: dotnet build ${{ env.Solution_Name }} --configuration Release --no-restore
-    - name: Test and publish results
-    - run: dotnet test ${{env.Project_Path }} --no-restore --verbosity normal
 
- 
+    - name: Restore NuGet packages
+      run: dotnet restore ${{ env.Solution_Name }}
+
+    - name: Build solution
+      run: dotnet build ${{ env.Solution_Name }} 
+
+    - name: Test and publish results
+      run: dotnet test ${{ env.Project_Path }} 
