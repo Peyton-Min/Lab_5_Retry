@@ -6,4 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Lab_6\**" />
+    <Content Remove="Lab_6\**" />
+    <EmbeddedResource Remove="Lab_6\**" />
+    <None Remove="Lab_6\**" />
+  </ItemGroup>
+
 </Project>
