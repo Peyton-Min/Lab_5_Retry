@@ -1,8 +1,8 @@
-﻿using Lab_5_Web_App_Dev.Data;
-using Lab_5_Web_App_Dev;
+﻿using Lab_5_Attempt_2.Data;
+using Lab_5_Attempt_2;
 using static System.Reflection.Metadata.BlobBuilder;
 
-namespace Lab_5_Web_App_Dev.Services
+namespace Lab_5_Attempt_2.Services
 {
     public class BookServices
     {

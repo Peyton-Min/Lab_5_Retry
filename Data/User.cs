@@ -1,4 +1,4 @@
-﻿namespace Lab_5_Web_App_Dev.Data
+﻿namespace Lab_5_Attempt_2.Data
 {
     public class User
     {

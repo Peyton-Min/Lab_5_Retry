@@ -1,7 +1,7 @@
-using Lab_5_Web_App_Dev.Components;
-using Lab_5_Web_App_Dev.Services;
+using Lab_5_Attempt_2.Components;
+using Lab_5_Attempt_2.Services;
 
-namespace Lab_5_Web_App_Dev
+namespace Lab_5_Attempt_2
 {
     public class Program
     {

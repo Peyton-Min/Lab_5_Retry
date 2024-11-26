@@ -1,5 +1,5 @@
-using Lab_5_Web_App_Dev.Data;
-using Lab_5_Web_App_Dev.Services;
+using Lab_5_Attempt_2.Data;
+using Lab_5_Attempt_2.Services;
 //Code Source: https://chatgpt.com/share/673b8ef3-2d58-8002-937e-608e196f023e
 
 namespace Lab_6
