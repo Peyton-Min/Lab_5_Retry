@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env: 
-      Solution_Name: Lab_5_Web_App_Dev.sln
+      Solution_Name: Lab_5_Attempt_2.sln
       Project_Path: Lab_6/Lab_6.csproj
 
     steps:
